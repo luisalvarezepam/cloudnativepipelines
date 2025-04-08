@@ -1,0 +1,12 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "terraform.azurerm.loganalytics",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf|^\\/[^/\\.]+\\.json)$"
+                }
+            }
+        ]
+    }
+}

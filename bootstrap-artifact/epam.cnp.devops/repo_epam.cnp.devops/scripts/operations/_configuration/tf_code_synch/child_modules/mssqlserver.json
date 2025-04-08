@@ -1,0 +1,12 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "terraform.azurerm.mssqlserver",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,6 @@
+steps:
+- pwsh: |
+    $statusCode = (Invoke-WebRequest -Uri "https://$(ENV_WEBAPP_NAME)-canary.azurewebsites.net/" -Method Get).StatusCode
+    if ($statusCode -ne 200) { throw ("Status code is {0}" -f $statusCode) }
+  name: Tests
+  displayName: 'Check status code'

@@ -1,0 +1,12 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "epam.alz.terraform",
+                "files": {
+                    "include": "(_configuration/_global/[ -~]+tf[ -~]*)$"
+                }
+            }
+        ]
+    }
+}

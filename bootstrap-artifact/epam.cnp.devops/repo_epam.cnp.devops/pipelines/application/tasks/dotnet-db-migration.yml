@@ -1,0 +1,45 @@
+parameters:
+- name: projectPath
+  default: 'src'
+- name: publishArtifact
+  type: boolean
+  default: false
+
+
+steps:
+
+- pwsh: |
+    Write-Host "`n---- Check dotnet-ef tool existence ----`n"
+    $check_dotnet_ef = $false
+    $dotnet_tools = dotnet tool list --global
+    foreach ($tool in $dotnet_tools)
+    {
+      if ($tool.Contains("dotnet-ef")) { $check_dotnet_ef = $true }
+    }
+    if ($check_dotnet_ef -eq $false)
+    {
+      Write-Host "`n---- dotnet-ef doesn't install on the Agent. ----`n----Processing... install dotnet-ef ----`n"
+      dotnet tool install --global dotnet-ef --version 6.0.4
+    }
+    else
+    {
+      Write-Host "`n---- dotnet-ef already installed ----`n"
+    }
+  name: EntityFrameworkCore_Init
+  displayName: 'Initialize EntityFrameworkCore'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Create migration'
+  inputs:
+    command: custom
+    custom: ef
+    arguments: 'migrations script -p $(APP_PROJECT_NAME).csproj -o $(System.DefaultWorkingDirectory)/sql/DbMigration.sql -i'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.projectPath }}'
+    verbosityPack: 'Detailed'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish migrated sql db'
+  enabled: ${{ parameters.publishArtifact }}
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)/sql'
+    ArtifactName: 'sql-$(Build.BuildNumber)'

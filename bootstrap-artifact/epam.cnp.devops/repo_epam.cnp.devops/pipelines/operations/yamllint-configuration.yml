@@ -1,0 +1,15 @@
+extends: default
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+
+rules:
+  line-length:
+    max: 128
+    level: warning
+  document-start: disable
+  indentation:
+    level: warning
+    indent-sequences: consistent
+  new-line-at-end-of-file: disable

@@ -1,0 +1,36 @@
+name: $(Build.SourceBranchName)-$(Build.BuildId)
+
+parameters:
+# Disable checks by a comma seperated list
+# e.g.: "-e AZU007,AZU008"
+- name: scanArguments
+  type: string
+  default: '-e'
+- name: workingDirectory
+  type: string
+  default: "iac/terraform/"
+
+pool:
+  vmImage: ubuntu-latest
+
+trigger:
+  branches:
+    include:
+    - feature/*
+    - bugfix/*
+    - hotfix/*
+    - develop
+    - main
+    - release/*
+  paths:
+    include:
+    - iac/terraform/*
+
+steps:
+- template: tasks/terraform-validate.yml
+  parameters:
+    workingDirectory: ${{ parameters.workingDirectory }}
+
+- template: tasks/terraform-tfsec-scan.yml
+  parameters:
+    scanArguments: ${{ parameters.scanArguments }}

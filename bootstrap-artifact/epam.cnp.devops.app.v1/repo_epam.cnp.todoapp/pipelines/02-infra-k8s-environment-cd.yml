@@ -1,0 +1,26 @@
+name: $(Build.SourceBranchName)-$(Build.BuildId)
+
+resources:
+  repositories:
+  - repository: templates
+    type: git
+    name: epam.cnp.devops/epam.cnp.devops
+    endpoint: "tfs_cnpdevopsproject"
+    ref: 'refs/heads/develop'
+
+variables:
+- group: epam.com.env.epamaodpsshared01
+- group: sys.global
+
+pool:
+  #{agent_pool}#
+
+trigger: none
+
+stages:
+- template: pipelines/infrastructure/kubernetes-configuration.yml@templates
+  parameters:
+    envList:
+    - epam.dev.env.epamaodpsshared01
+    - epam.qa.env.epamaodpsshared01
+    - epam.prod.env.epamaodpsshared01

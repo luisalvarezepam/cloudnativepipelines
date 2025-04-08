@@ -1,0 +1,12 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "terraform.azurerm.vnet",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            }
+        ]
+    }
+}

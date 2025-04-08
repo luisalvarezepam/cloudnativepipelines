@@ -1,0 +1,41 @@
+{
+  "reposBuildPolicies": [],
+  "environments": [],
+  "pipelines": [
+    {
+      "name": "yaml-validation",
+      "yml_path": "/pipelines/operations/yml-validation.yml",
+      "repo_id": "epam.cnp.devops",
+      "path": "\\"
+    },
+    {
+      "name": "terraform-validation",
+      "yml_path": "pipelines/operations/terraform-validation.yml",
+      "repo_id": "epam.cnp.devops",
+      "path": "\\"
+    },
+    {
+      "name": "dora-template-customization",
+      "yml_path": "pipelines/operations/dora-template-customization.yml",
+      "repo_id": "epam.cnp.devops",
+      "path": "\\"
+    }
+  ],
+  "repositories": [
+    {
+      "name": "epam.cnp.devops",
+      "isDefaultRepo": true
+    }
+  ],
+  "wikis": [
+    {
+      "wikiRepoName": "CNP-WIKI",
+      "name": "CNP-WIKI",
+      "type": "codeWiki",
+      "mappedPath": "/"
+    }
+  ],
+  "var_groups": [],
+  "dashboards": [],
+  "reposRaw": []
+}

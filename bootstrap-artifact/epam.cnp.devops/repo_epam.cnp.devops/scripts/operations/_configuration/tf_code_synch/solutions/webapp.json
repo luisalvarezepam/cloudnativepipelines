@@ -1,0 +1,66 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "epam.alz.terraform",
+                "files": {
+                    "include": "(_solutions/webapp/[ -~]+tf$)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.rg",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.mssql_server",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.mssql_db",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.cosmosdb_account",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.windows_web_app",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.linux_web_app",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.asp",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.app_insights",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.monitor_action_group",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            }
+        ]
+    }
+}

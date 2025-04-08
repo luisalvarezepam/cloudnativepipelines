@@ -1,0 +1,12 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "terraform.azurerm.dashboard",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            }
+        ]
+    }
+}

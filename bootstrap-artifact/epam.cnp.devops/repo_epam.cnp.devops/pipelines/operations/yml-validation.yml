@@ -1,0 +1,38 @@
+name: $(Build.SourceBranchName)-$(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+      - feature/*
+      - bugfix/*
+      - hotfix/*
+      - develop
+      - main
+      - release/*
+  paths:
+    include:
+      - pipelines/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: lintDirectory
+    value: "pipelines/"
+  - name: yamllintConfigFile
+    value: "pipelines/operations/yamllint-configuration.yml"
+
+steps:
+  - pwsh: |
+      sudo apt-get update
+      sudo apt-get install yamllint -y
+    name: yamllint_install
+    displayName: 'Install yamllint'
+
+  - pwsh: |
+      echo 'YAML files check directory: ${{ variables.lintDirectory }}'
+      echo 'YAMLlint configuration file: ${{ variables.yamllintConfigFile }}'
+      yamllint -c ${{ variables.yamllintConfigFile }} ${{ variables.lintDirectory }}
+      $LASTEXITCODE = 0
+      echo 'YAML validation finished.'
+    displayName: 'YAML Validation'

@@ -1,0 +1,61 @@
+name: $(Build.SourceBranchName)-$(Build.BuildId)
+
+resources:
+  repositories:
+  - repository: templates
+    type: git
+    name: epam.cnp.devops/epam.cnp.devops
+    endpoint: "tfs_cnpdevopsproject"
+    ref: 'refs/heads/develop'
+
+  - repository: tfvariables
+    type: git
+    name: epam.cnp.todoapp
+    endpoint: "tfs_cnpdevopsproject"
+    ref: $(Build.SourceBranch)
+
+parameters:
+- name: destroy
+  displayName: Destroy
+  type: boolean
+  default: false
+- name: refreshOnly
+  displayName: Refresh only
+  type: boolean
+  default: false
+- name: ManualValidation
+  displayName: Manual Validation
+  type: boolean
+  default: false
+- name: terraformConfFileFormat
+  displayName: Terraform Configuration File format
+  type: string
+  default: tfvars  
+- name: terraformTarget
+  displayName: Terraform targeting arguments (optional)
+  type: string
+  default: 'empty'
+
+variables:
+- group: epam.com.env.epamaodpsshared01
+- group: sys.global
+
+pool:
+  #{agent_pool}#
+
+trigger: none
+
+stages:
+- template: pipelines/infrastructure/terraform-deployment-pipeline.yml@templates
+  parameters:
+    infraSolutionFolder: iac/terraform/epam.alz.terraform/_modules/070_appmonitoring
+    configurationPath: pipelines/_configuration/
+    envList:
+      - epam.dev.env.epamaodpsshared01
+      - epam.qa.env.epamaodpsshared01
+      - epam.prod.env.epamaodpsshared01
+    destroy: ${{ parameters.destroy }}
+    terraformConfFileFormat: ${{ parameters.terraformConfFileFormat }}
+    ManualValidation: ${{ parameters.ManualValidation }}
+    terraformTarget: ${{ parameters.terraformTarget }}
+    refreshOnly: ${{ parameters.refreshOnly }}

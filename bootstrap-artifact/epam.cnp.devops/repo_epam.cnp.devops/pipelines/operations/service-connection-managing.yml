@@ -1,0 +1,170 @@
+parameters:
+- name: workingDirectory
+  displayName: Full path to work folder
+  type: string
+  default: '.'
+- name: scType
+  type: string
+- name: scName
+  type: string
+- name: scDelete
+  type: boolean
+  default: false
+- name: ClusterContext
+  type: string
+  default: current-context
+- name: grantAccess
+  type: boolean
+  default: false
+- name: patToken
+  type: string
+
+jobs:
+- job: Service_connection_create_${{ parameters.scType }}_${{ parameters.scName }}
+  variables:
+    PIPE_SERVICE_ENDPOINT: ${{ parameters.scName }}
+  displayName: Service connection create ${{ parameters.scType }} ${{ parameters.scName }}
+  condition: eq('${{ parameters.scDelete }}','false')
+  workspace:
+    clean: all
+  steps:
+
+  - pwsh: |
+      Write-Host "`n---- Make sure we are signed in to Azure. ----`n"
+      az login --service-principal -u '$(ENV_AZURE_CLIENT_ID)' -p '$(ENV_AZURE_CLIENT_SECRET)' --tenant $(ENV_AZURE_TENANT_ID) 
+      if ($LastExitCode -eq 0)
+      {
+          Write-Host " Log in to Azure succeeded."
+      }
+      else
+      {
+          Write-Error "`n---- Check your credentials. ----`n"
+      }
+      if ("${{ parameters.scType }}" -eq "subscription" -or "${{ parameters.scType }}" -eq "acr")
+      {
+        Write-Host "`n---- Get subscription name ----`n"
+        $subName = ((az account list --all | ConvertFrom-Json) | Where-Object {$_.id -eq "$(ENV_AZURE_SUBSCRIPTION_ID)"}).name
+        Write-Host "`n---- Set auxiliary variable values. ----`n"
+        Write-Host "##vso[task.setvariable variable=PIPE_AZURE_SUBSCRIPTION_NAME]$subName"
+      }
+      if ("${{ parameters.scType }}" -eq "aks")
+      {
+        Write-Host "`n---- Get AKS credentials. ----`n"
+        az aks get-credentials --subscription $(ENV_AZURE_SUBSCRIPTION_ID) `
+        --resource-group "$(ENV_AKS_RG)" `
+        --name "$(ENV_AKS_NAME)" `
+        --file ${{ parameters.workingDirectory }}/.kube/config
+        Write-Host "`n---- Set auxiliary variable values. ----`n"
+        $kubeConfig = $(Get-Content -Path ${{ parameters.workingDirectory }}/.kube/config)
+        if ($IsLinux -or $IsMacOS)
+        {
+          $formattedKubeConfig = $($(Get-Content -Raw -Path ${{ parameters.workingDirectory }}/.kube/config).Replace("`n","\n")).Trim()
+        }
+        elseif ($IsWindows)
+        {
+          $formattedKubeConfig = $($(Get-Content -Raw -Path ${{ parameters.workingDirectory }}/.kube/config).Replace("`r`n","\n")).Trim()
+        }
+        else
+        {
+          Write-Error "Please use Linux, Windows or MacOs operation system on your agent or rework this script to run on your OS."
+        }
+        $kubeConfigUrlLine = $kubeConfig | Select-String -Pattern 'server: '
+        $aksUrl = ($kubeConfigUrlLine.Line).Replace('server: ', '').Trim()
+        if ("${{ parameters.ClusterContext }}" -eq "current-context")
+        {
+          $kubeConfigClusterContextLine = $kubeConfig | Select-String -Pattern '${{ parameters.ClusterContext }}: '
+          $clusterContext = ($kubeConfigClusterContextLine.Line).Replace('${{ parameters.ClusterContext }}: ', '').Trim()
+        }
+        else
+        {
+          $clusterContext = "${{ parameters.ClusterContext }}"
+        }
+        Write-Host "##vso[task.setvariable variable=PIPE_AKS_KUBE_CONFIG]$formattedKubeConfig"
+        Write-Host "##vso[task.setvariable variable=PIPE_AKS_URL]$aksUrl"
+        Write-Host "##vso[task.setvariable variable=PIPE_CLUSTER_CONTEXT]$clusterContext"
+      }
+    name: set_variables
+    displayName: Set auxiliary variable values
+
+  - task: replacetokens@5
+    displayName: 'Replace tokens in files'
+    inputs:
+      rootDirectory: '${{ parameters.workingDirectory }}'
+      targetFiles: '**/*'
+      actionOnMissing: log warning
+      verbosity: 'detailed'
+      keepToken: true
+      escapeType: none
+      enableTelemetry: false
+
+  - pwsh: |
+      Write-Host "`n---- Log in to the Azure DevOps ----`n"
+      Write-Output $env:AZURE_DEVOPS_EXT_PAT | az devops login
+      az devops configure --defaults organization=$(System.CollectionUri) project="$(System.TeamProject)"
+      Write-Host "`n---- Check Service Connection existence. ----`n"
+      $existingServiceConnections = $(az devops service-endpoint list) | ConvertFrom-Json
+      $ServiceConnection = $existingServiceConnections | Where-Object -Property name -Like "$(PIPE_SERVICE_ENDPOINT)"
+      if ($ServiceConnection)
+      {
+        Write-Warning "Service Connection $(PIPE_SERVICE_ENDPOINT) has already existed."
+      }
+      else
+      {
+        Write-Host "`n---- Processing... New Service Connection creation $(PIPE_SERVICE_ENDPOINT). ----`n"
+        $newServiceConnection = $(az devops service-endpoint create --service-endpoint-configuration ${{ parameters.workingDirectory }}/${{ parameters.scType }}.json | ConvertFrom-Json)
+        $attempt = 0
+        while (($newServiceConnection.isReady -ne "true") -and ($attempt -lt 9))
+        {
+          $attempt ++
+          Write-Host "`n---- Processing... New Service Connection creation $(PIPE_SERVICE_ENDPOINT). ----`n"
+          Start-Sleep -Seconds 30
+          $newServiceConnection = $(az devops service-endpoint show --id $newServiceConnection.id --detect true | ConvertFrom-Json)
+        }
+        if ($newServiceConnection.isReady -eq "true")
+        {
+          Write-Host $("New ${{ parameters.scType }} service connection has been created:`n Name: {0}`n ID: {1}" -f $newServiceConnection.name, $newServiceConnection.id)
+        }
+        else
+        {
+          Write-Error "`n---- It is impossible to create the Service Connection $(PIPE_SERVICE_ENDPOINT). ----`n"
+        }
+        if ("${{ parameters.grantAccess }}" -eq "true")
+        {
+          Write-Host "`n---- Allow all pipelines to access this service endpoint for Service Connection $(PIPE_SERVICE_ENDPOINT). ----`n"
+          az devops service-endpoint update --id $newServiceConnection.id --detect true --enable-for-all true
+        }
+      }
+    name: Create_Service_Connection
+    displayName: Create Service Connection
+    env:
+      AZURE_DEVOPS_EXT_PAT: ${{ parameters.patToken }}
+
+- job: Service_connection_delete_${{ parameters.scType }}_${{ parameters.scName }}
+  displayName: Service connection delete ${{ parameters.scType }} ${{ parameters.scName }}
+  condition: eq('${{ parameters.scDelete }}','true')
+  variables:
+    PIPE_SERVICE_ENDPOINT: ${{ parameters.scName }}
+  workspace:
+    clean: all
+  steps:
+
+  - pwsh: |
+      Write-Host "`n---- Log in to the Azure DevOps ----`n"
+      Write-Output $env:AZURE_DEVOPS_EXT_PAT | az devops login
+      az devops configure --defaults organization=$(System.CollectionUri) project="$(System.TeamProject)"
+      Write-Host "`n---- Check Service Connection existence. ----`n"
+      $existingServiceConnections = $(az devops service-endpoint list) | ConvertFrom-Json
+      $ServiceConnection = $existingServiceConnections | Where-Object -Property name -Like "$(PIPE_SERVICE_ENDPOINT)"
+      if ($ServiceConnection)
+      {
+        Write-Host "Cleanup existing Service Connection: $(PIPE_SERVICE_ENDPOINT)"
+        az devops service-endpoint delete --id $ServiceConnection.id --yes
+      }
+      else
+      {
+        Write-Host "`n---- Service Connection $(PIPE_SERVICE_ENDPOINT) does not exist. ----`n"
+      }
+    name: Delete_Service_Connection
+    displayName: Delete Service Connection
+    env:
+      AZURE_DEVOPS_EXT_PAT: ${{ parameters.patToken }}

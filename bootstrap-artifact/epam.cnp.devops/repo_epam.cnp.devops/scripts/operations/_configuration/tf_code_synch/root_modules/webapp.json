@@ -1,0 +1,24 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "epam.alz.terraform",
+                "files": {
+                    "include": "(_modules/075_webapp/[ -~]+tf$)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.linuxwebapp",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.windowswebapp",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            }
+        ]
+    }
+}

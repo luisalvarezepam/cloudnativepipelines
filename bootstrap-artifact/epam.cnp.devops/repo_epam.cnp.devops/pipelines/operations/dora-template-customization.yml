@@ -1,0 +1,46 @@
+---
+name: $(Build.SourceBranchName)-$(Build.BuildId)
+
+pool:
+  vmImage: 'windows-latest'
+
+trigger:
+  - none
+
+parameters:
+  - name: ADOOrganizationURL
+    type: string
+    default: $(System.CollectionUri)
+  - name: ADOProjectName
+    type: string
+    default: $(System.TeamProject)
+
+steps:
+  - pwsh: |
+      $path = '.\template\DataModelSchema'
+      $organizationName = $('${{ parameters.ADOOrganizationURL }}' -split '/')[-2]
+
+      Write-Host 'Extracting data from pbit template...'
+      Rename-Item -Path pipelines/operations/_configuration/dora-template_v1.0.1.pbit  -NewName  dora-template_v1.0.1.zip
+      Expand-Archive ./pipelines/operations/_configuration/dora-template_v1.0.1.zip -DestinationPath template
+
+      Write-Host 'Updating pbit template...'
+      Write-Host 'Azure DevOps organization URL: ${{ parameters.ADOOrganizationURL }}'
+      Write-Host 'Azure DevOps project name: ${{ parameters.ADOProjectName }}'
+      (Get-Content $path -Encoding unicode -Raw) `
+          -replace 'ADOOrganizationName/ADOProjectName',
+                    ($organizationName + "/" + "${{ parameters.ADOProjectName }}") | Out-File $path -Encoding unicode
+
+      Write-Host 'Encoding to UTF16noBOM...'
+      [byte[]]$fileSchema = Get-Content $path -Raw -AsByteStream
+      [IO.File]::WriteAllBytes($($fileSchema.PSPath), $fileSchema[2..$fileSchema.length])
+
+      Write-Host 'Archiving template...'
+      7z a -mx=7 -tzip dora_${{ parameters.ADOProjectName }}.pbit -r .\template\*
+    displayName: 'Update pbit template script'
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish artifact'
+    inputs:
+      targetPath: 'dora_${{ parameters.ADOProjectName }}.pbit'
+      ArtifactName: '$(Build.BuildNumber)'

@@ -1,0 +1,13 @@
+parameters:
+- name: scanArguments
+  type: string
+  default: ''
+
+steps:
+- task: DockerInstaller@0
+  displayName: 'Install Docker'
+
+- pwsh: |
+    docker run --rm -v "$(Build.Repository.LocalPath):/src" aquasec/tfsec /src ${{ parameters.scanArguments }} --soft-fail
+  workingDirectory: '$(Build.Repository.LocalPath)'
+  displayName: 'TFSec Static Analysis'

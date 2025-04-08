@@ -1,0 +1,12 @@
+parameters:
+- name: slotName
+  type: string
+
+steps:
+- task: AzureAppServiceManage@0
+  displayName: 'Swap WebApp Slots'
+  inputs:
+    azureSubscription: '$(ENV_SERVICE_CONNECTION_NAME)'
+    WebAppName: '$(ENV_WEBAPP_NAME)'
+    ResourceGroupName: '$(ENV_RESOURCE_GROUP_NAME)'
+    SourceSlot: ${{ parameters.slotName }}

@@ -1,0 +1,33 @@
+### epam.cnp.devops
+- project: epam.cnp.devops
+  replaceContent:
+  - pattern: 
+      filePath: ""
+      fileMask: ["*.yml", "*.tf", "*.md", "*.yaml"]
+      oldValue: "#{org_name}#"
+  - pattern: 
+      filePath: ""
+      fileMask: ["*.yml", "*.tf", "*.md", "*.yaml"]
+      oldValue: "#{project_name}#"
+  - pattern: 
+      filePath: ""
+      fileMask: ["*.yml"]
+      oldValue: "#{agent_pool}#"
+      newValue: "vmImage: ubuntu-latest"
+
+### epam.cnp.devops.app.v1
+- project: epam.cnp.devops.app.v1
+  replaceContent:
+  - pattern: 
+      filePath: ""
+      fileMask: ["*.yml", "*.tf", "*.md", "*.yaml"]
+      oldValue: "#{org_name}#"
+  - pattern: 
+      filePath: ""
+      fileMask: ["*.yml", "*.tf", "*.md", "*.yaml"]
+      oldValue: "#{project_name}#"
+  - pattern: 
+      filePath: ""
+      fileMask: ["*.yml"]
+      oldValue: "#{agent_pool}#" 
+      newValue: "vmImage: ubuntu-latest"

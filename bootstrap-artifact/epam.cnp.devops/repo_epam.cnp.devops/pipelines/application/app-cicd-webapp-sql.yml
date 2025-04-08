@@ -1,0 +1,169 @@
+# The pipeline logic based on Gitflow branching strategy.
+# Stages which link to pipeline templates.
+# Pay attention that most of templates have parameters, some of them are mandatory!
+
+parameters:
+- name: Environment
+  type: string
+- name: varGroup
+  type: object
+- name: DependsOn
+  type: object
+  default: []
+- name: Condition
+  type: string
+  default: ''
+
+stages:
+- stage: Build_${{ parameters.Environment }}
+  displayName: 'App. Build and Test for ${{ parameters.Environment }} environment'
+  dependsOn: ${{ parameters.DependsOn }}
+  condition: and(not(failed()), or(contains(variables['Build.SourceBranch'], 'refs/heads/feature/'), ${{ parameters.Condition }}))
+  variables:
+  - group: ${{ parameters.varGroup }}
+
+  jobs:
+  - job: Build
+    displayName: 'App. Build and Test for ${{ parameters.Environment }} environment'
+    workspace:
+      clean: all
+
+    steps:
+    - template: ../operations/tasks/clone-repositories.yml
+      parameters:
+        repositories:
+        - self
+
+    - template: tasks/dotnetcore-build.yml
+      parameters:
+        enableSonarCloudAnalyze: false
+        ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), contains(variables['Build.SourceBranch'], 'refs/heads/release/'), contains(variables['Build.SourceBranch'], 'refs/heads/feature/')) }}:
+          dotnetPublish: true
+          publishArtifact: true
+
+    - template: tasks//dotnet-db-migration.yml
+      parameters:
+        ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), eq(variables['Build.SourceBranch'], 'refs/heads/main'), contains(variables['Build.SourceBranch'], 'refs/heads/release/'), contains(variables['Build.SourceBranch'], 'refs/heads/feature/')) }}:
+          publishArtifact: true
+
+# Deploy application to the environment
+- stage: Deploy_on_${{ parameters.Environment }}
+  displayName: 'App. Deploy on ${{ parameters.Environment }} Environment'
+  dependsOn: Build_${{ parameters.Environment }}
+  condition: and(not(failed()), ${{ parameters.Condition }})
+  variables:
+  - group: ${{ parameters.varGroup }}
+
+  jobs:
+  - deployment: Deploy_on_${{ parameters.Environment }}
+    displayName: 'App. Deploy on ${{ parameters.Environment }} Environment'
+    environment: ${{ replace(parameters.varGroup, '.', '_') }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: tasks/dotnetcore-webapp-deployment.yml
+            ${{ if eq(parameters.Environment, 'PROD') }}:
+              parameters:
+                slotName: 'canary'
+# Tests on DEV job.
+  - ${{ if eq(parameters.Environment, 'DEV') }}:
+    - template: jobs/synthetic-test.yaml
+      parameters:
+        jobName: 'Deployment_verification_tests_${{ parameters.Environment }}'
+        command: 'Write-Host "---- Deployment verification tests. ----"'
+        DependsOn: ["Deploy_on_${{ parameters.Environment }}"]
+    - template: jobs/synthetic-test.yaml
+      parameters:
+        jobName: 'Integration_tests'
+        command: 'Write-Host "---- Integration tests. ----"'
+        DependsOn: ["Deployment_verification_tests_${{ parameters.Environment }}"]
+# Tests on DEV job.
+  - ${{ if eq(parameters.Environment, 'QA') }}:
+    - template: jobs/synthetic-test.yaml
+      parameters:
+        jobName: 'Deployment_verification_tests_${{ parameters.Environment }}'
+        command: 'Write-Host "---- Deployment verification tests. ----"'
+        DependsOn: ["Deploy_on_${{ parameters.Environment }}"]
+    - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/develop') }}:              
+      - template: jobs/synthetic-test.yaml
+        parameters:
+          jobName: 'Feature_tests'
+          command: 'Write-Host "---- Feature tests. ----"'
+          DependsOn: ["Deployment_verification_tests_${{ parameters.Environment }}"]
+      - template: jobs/synthetic-test.yaml
+        parameters:
+          jobName: 'High_priority_risk_based_tests'
+          command: 'Write-Host "---- High priority risk based tests. ----"'
+          DependsOn: ["Feature_tests"]
+    - ${{ if or(contains(variables['Build.SourceBranch'], 'refs/heads/release/'), contains(variables['Build.SourceBranch'], 'refs/heads/hotfix/')) }}:
+      - template: jobs/synthetic-test.yaml
+        parameters:
+          jobName: 'Low_priority_risk_based_tests'
+          command: 'Write-Host "---- Low priority risk based tests. ----"'
+          DependsOn: ["Deployment_verification_tests_${{ parameters.Environment }}"]
+      - template: jobs/synthetic-test.yaml
+        parameters:
+          jobName: 'Exploratory_testing'
+          command: 'Write-Host "---- Exploratory testing. ----"'
+          DependsOn: ["Low_priority_risk_based_tests"]
+      - template: jobs/synthetic-test.yaml
+        parameters:
+          jobName: 'Non_functional_testing'
+          command: 'Write-Host "---- Non-functional testing. ----"'
+          DependsOn: ["Exploratory_testing"]
+
+# Tests_on_PROD stage triggers from 'release/*' branches.
+- ${{ if eq(parameters.Environment, 'PROD') }}:
+  - stage: Tests_on_PROD
+    displayName: 'App. Tests on PROD'
+    condition: and(not(failed()), ${{ parameters.Condition }})
+    dependsOn: Deploy_on_PROD
+    variables:
+    - group: ${{ parameters.varGroup }}
+
+    jobs:
+    - job: Tests_on_PROD
+      displayName: 'App. Tests on PROD'
+      steps:
+      - template: ../operations/tasks/webapp-test-simulaton.yml
+
+
+  # Traffic_Routing_on_PROD stage triggers from 'release/*' branches.
+  - stage: Traffic_Routing_on_PROD
+    displayName: 'App. Traffic routing on PROD'
+    condition: and(not(failed()), ${{ parameters.Condition }})
+    dependsOn: Tests_on_PROD
+    variables:
+    - group: ${{ parameters.varGroup }}
+
+    jobs:
+    - deployment: Traffic_Routing_on_PROD
+      displayName: 'App. Traffic routing on PROD'
+      environment: ${{ replace(parameters.varGroup, '.', '_') }}
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - template: ../operations/tasks/enable-webapp-traffic-routing.yml
+
+
+  # Swap_slots_on_PROD stage triggers from 'release/*' branches.
+  - stage: Swap_slots_on_PROD
+    displayName: 'App. Swap slots on PROD'
+    condition: and(not(failed()), ${{ parameters.Condition }})
+    dependsOn: Traffic_Routing_on_PROD
+    variables:
+    - group: ${{ parameters.varGroup }}
+
+    jobs:
+    - deployment: Swap_slots_on_PROD
+      displayName: 'App. Swap slots on PROD'
+      environment: ${{ replace(parameters.varGroup, '.', '_') }}
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - template: ../operations/tasks/swap-webapp-slots.yml
+              parameters:
+                slotName: 'canary'

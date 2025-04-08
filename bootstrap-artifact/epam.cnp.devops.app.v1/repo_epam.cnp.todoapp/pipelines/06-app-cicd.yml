@@ -1,0 +1,36 @@
+# Resource repository where pipeline templates located.
+# This is mandatory for linking to templates in other repository.
+resources:
+  repositories:
+  - repository: templates
+    type: git
+    name: epam.cnp.devops/epam.cnp.devops
+    endpoint: "tfs_cnpdevopsproject"
+    ref: 'refs/heads/develop'
+
+pool:
+  #{agent_pool}#
+
+trigger: none
+
+parameters:
+- name: environmentObjects
+  type: object
+  default: 
+  - envName: 'dev'
+    VG: 'epam.dev.env.epamaodpsshared01'
+  - envName: 'qa'
+    VG: 'epam.qa.env.epamaodpsshared01'
+  - envName: 'prod'
+    VG: 'epam.prod.env.epamaodpsshared01'
+
+variables:
+- group: epam.com.app.todoapp
+- group: epam.com.env.epamaodpsshared01
+- group: sys.global
+
+stages:
+- template: pipelines/application/app-v1-cicd.yml@templates
+  parameters:
+    buildContextVG: 'epam.dev.env.epamaodpsshared01'
+    environmentObjects: ${{ parameters.environmentObjects }}

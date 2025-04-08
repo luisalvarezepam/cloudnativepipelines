@@ -1,0 +1,11 @@
+steps:
+- task: AzureCLI@2
+  displayName: 'Enable traffic routing on stage'
+  inputs:
+    azureSubscription: '$(ENV_SERVICE_CONNECTION_NAME)'
+    scriptLocation: inlineScript
+    inlineScript: |
+      az webapp traffic-routing set --distribution canary=$(APP_TRAFFIC_PERCENTAGE_CANARY) `
+                                    --name '$(ENV_WEBAPP_NAME)' `
+                                    --resource-group '$(ENV_RESOURCE_GROUP_NAME)'
+    scriptType: pscore

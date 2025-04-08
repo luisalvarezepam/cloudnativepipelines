@@ -1,0 +1,72 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "epam.alz.terraform",
+                "files": {
+                    "include": "(_solutions/cnp_app_v1/[ -~]+tf$)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.rg",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.log_analytics",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.vnet",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.cosmosdb_account",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.azure_container_registry",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.aks",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.private_endpoint",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.monitor_action_group",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.alerts",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.app_insights",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+        ]
+    }
+}

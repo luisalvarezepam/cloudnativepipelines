@@ -1,0 +1,433 @@
+{
+  "reposBuildPolicies": [],
+  "environments": [
+    "dev",
+    "qa",
+    "prod"
+  ],
+  "pipelines": [
+    {
+      "name": "01-infra-cd",
+      "yml_path": "/pipelines/01-infra-cd.yml",
+      "repo_id": "epam.cnp.todoapp",
+      "path": "\\infrastructure"
+    },
+    {
+      "name": "04-infra-appmonitoring-cd",
+      "yml_path": "/pipelines/04-infra-appmonitoring-cd.yml",
+      "repo_id": "epam.cnp.todoapp",
+      "path": "\\infrastructure"
+    },
+    {
+      "name": "02-infra-k8s-environment-cd",
+      "yml_path": "/pipelines/02-infra-k8s-environment-cd.yml",
+      "repo_id": "epam.cnp.todoapp",
+      "path": "\\infrastructure"
+    },
+    {
+      "name": "00-infra-prerequisites-cd",
+      "yml_path": "pipelines/00-infra-prerequisites-cd.yml",
+      "repo_id": "epam.cnp.todoapp",
+      "path": "\\infrastructure"
+    },
+    {
+      "name": "06-app-cicd",
+      "yml_path": "pipelines/06-app-cicd.yml",
+      "repo_id": "epam.cnp.todoapp",
+      "path": "\\application"
+    }
+  ],
+  "repositories": [
+    {
+      "name": "epam.cnp.todoapp",
+      "isDefaultRepo": false
+    }
+  ],
+  "wikis": [],
+  "var_groups": [
+    {
+      "variables": {
+        "APP_NAME": {
+          "value": "todo-app",
+          "is_secret": "false"
+        },
+        "APP_K8S_MEMORY_REQUESTS": {
+          "value": "350Mi",
+          "is_secret": "false"
+        },
+        "APP_TRAFFIC_PERCENTAGE_CANARY": {
+          "value": "20",
+          "is_secret": "false"
+        },
+        "APP_DOCKER_IMAGE_STABLE_TAG": {
+          "value": "stable",
+          "is_secret": "false"
+        },
+        "APP_BUILD_CONFIGURATION": {
+          "value": "Release",
+          "is_secret": "false"
+        },
+        "APP_PROJECT_NAME": {
+          "value": "todo",
+          "is_secret": "false"
+        },
+        "APP_SONAR_PROJECT": {
+          "value": "EPMC-ACM-Azure",
+          "is_secret": "false"
+        },
+        "APP_K8S_MEMORY_LIMITS": {
+          "value": "500Mi",
+          "is_secret": "false"
+        },
+        "APP_K8S_CPU_REQUESTS": {
+          "value": "100m",
+          "is_secret": "false"
+        },
+        "APP_REPLICA_COUNT": {
+          "value": "2",
+          "is_secret": "false"
+        },
+        "APP_K8S_CPU_LIMITS": {
+          "value": "150m",
+          "is_secret": "false"
+        }
+      },
+      "name": "epam.com.app.todoapp",
+      "description": null
+    },
+    {
+      "variables": {
+        "ENV_ACR_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)acr$(ENV_INFRA_LOCATION_SHORT)$(ENV_INFRA_TYPE)01",
+          "is_secret": "false"
+        },
+        "ENV_APP_ALERTS_RECEIVERS_EMAIL": {
+          "value": "yury_piakhotski@epam.com",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_CONTAINER_NAME": {
+          "value": "terraform-state-files",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_LOCATION": {
+          "value": "northeurope",
+          "is_secret": "false"
+        },
+        "ENV_AZURE_TENANT_ID": {
+          "value": "b41b72d0-4e9f-4c26-8a69-f949f367c91d",
+          "is_secret": "false"
+        },
+        "ENV_AZURE_CLIENT_ID": {
+          "value": "abc6f1c0-4249-449d-becd-0efbe182f716",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_FOLDER": {
+          "value": "demoapp-com-epam-aodp-s-shared-01",
+          "is_secret": "false"
+        },
+        "ENV_AZURE_SUBSCRIPTION_ID": {
+          "value": "a03def49-d9de-4a49-a38f-3a2dcfcf84a1",
+          "is_secret": "false"
+        },
+        "ENV_HELM_CHART_CERT": {
+          "value": "cert-manager-config",
+          "is_secret": "false"
+        },
+        "ENV_CERT_MANAGER_ISSUER_EMAIL": {
+          "value": "yury_piakhotski@epam.com",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_STORAGE_ACCOUNT_NAME": {
+          "value": "epamstrnoeuddemoappin33",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_SUBSCRIPTION_ID": {
+          "value": "a03def49-d9de-4a49-a38f-3a2dcfcf84a1",
+          "is_secret": "false"
+        },
+        "ENV_AZURE_ENVIRONMENT": {
+          "value": "public",
+          "is_secret": "false"
+        },
+        "ENV_AZURE_CLIENT_SECRET": {
+          "value": null,
+          "is_secret": "true"
+        },
+        "ENV_CERT_MANAGER_ISSUER_SERVER": {
+          "value": "https://acme-v02.api.letsencrypt.org/directory",
+          "is_secret": "false"
+        },
+        "ENV_SERVICE_CONNECTION_NAME": {
+          "value": "arm_epmcacm_21",
+          "is_secret": "false"
+        },
+        "ENV_HELM_CHART_INGR": {
+          "value": "ingress-nginx",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_RESOURCE_GROUP_NAME": {
+          "value": "epam-rg-noeu-d-demoappin01",
+          "is_secret": "false"
+        }
+      },
+      "name": "epam.com.env.epamaodpsshared01",
+      "description": "This is the variable group that consists of common variables in the EPMC-ACM21 (old - epam-aodp-s-shared-01) subscription."
+    },
+    {
+      "variables": {
+        "ENV_ACR_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)acr$(ENV_INFRA_LOCATION_SHORT)$(ENV_INFRA_TYPE)$(ENV_INFRA_NAME_PREFIX)01",
+          "is_secret": "false"
+        },
+        "ENV_KUBERNETES_NAMESPACE": {
+          "value": "$(ENV_NAME)",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_FOLDER": {
+          "value": "demoapp-dev-epam-aodp-s-shared-01",
+          "is_secret": "false"
+        },
+        "ENV_MONITOR_RG": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)monitor-01",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_SO_NAME": {
+          "value": "epam",
+          "is_secret": "false"
+        },
+        "ENV_AKS_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-aks-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)",
+          "is_secret": "false"
+        },
+        "ENV_NAME": {
+          "value": "dev",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_LOCATION_SHORT": {
+          "value": "noeu",
+          "is_secret": "false"
+        },
+        "ENV_AKS_RG": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)compute-01",
+          "is_secret": "false"
+        },
+        "ENV_ACR_RG_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)storage-01",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_LOCATION": {
+          "value": "northeurope",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_TYPE": {
+          "value": "d",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_NAME_PREFIX": {
+          "value": "demoappsol66",
+          "is_secret": "false"
+        },
+        "ENV_APPINS_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-appins-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)-01",
+          "is_secret": "false"
+        }
+      },
+      "name": "epam.dev.env.epamaodpsshared01",
+      "description": "This is the variable group that consists of variables for dev environment in the epam-aodp-s-shared-01 subscription."
+    },
+    {
+      "variables": {
+        "ENV_ACR_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)acr$(ENV_INFRA_LOCATION_SHORT)$(ENV_INFRA_TYPE)$(ENV_INFRA_NAME_PREFIX)01",
+          "is_secret": "false"
+        },
+        "ENV_KUBERNETES_NAMESPACE": {
+          "value": "$(ENV_NAME)",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_FOLDER": {
+          "value": "demoapp-qa-epam-aodp-s-shared-01",
+          "is_secret": "false"
+        },
+        "ENV_MONITOR_RG": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)monitor-01",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_SO_NAME": {
+          "value": "epam",
+          "is_secret": "false"
+        },
+        "ENV_AKS_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-aks-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)",
+          "is_secret": "false"
+        },
+        "ENV_NAME": {
+          "value": "qa",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_LOCATION_SHORT": {
+          "value": "noeu",
+          "is_secret": "false"
+        },
+        "ENV_AKS_RG": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)compute-01",
+          "is_secret": "false"
+        },
+        "ENV_ACR_RG_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)storage-01",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_LOCATION": {
+          "value": "northeurope",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_TYPE": {
+          "value": "d",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_NAME_PREFIX": {
+          "value": "demoappsol66",
+          "is_secret": "false"
+        },
+        "ENV_APPINS_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-appins-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)-01",
+          "is_secret": "false"
+        }
+      },
+      "name": "epam.qa.env.epamaodpsshared01",
+      "description": "This is the variable group that consists of variables for qa environment in the epam-aodp-s-shared-01 subscription."
+    },
+    {
+      "variables": {
+        "ENV_ACR_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)acr$(ENV_INFRA_LOCATION_SHORT)$(ENV_INFRA_TYPE)$(ENV_INFRA_NAME_PREFIX)01",
+          "is_secret": "false"
+        },
+        "ENV_KUBERNETES_NAMESPACE": {
+          "value": "$(ENV_NAME)",
+          "is_secret": "false"
+        },
+        "ENV_TF_STATE_FOLDER": {
+          "value": "demoapp-prod-epam-aodp-s-shared-01",
+          "is_secret": "false"
+        },
+        "ENV_MONITOR_RG": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)monitor-01",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_SO_NAME": {
+          "value": "epam",
+          "is_secret": "false"
+        },
+        "ENV_AKS_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-aks-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)",
+          "is_secret": "false"
+        },
+        "ENV_NAME": {
+          "value": "prod",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_LOCATION_SHORT": {
+          "value": "noeu",
+          "is_secret": "false"
+        },
+        "ENV_AKS_RG": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)compute-01",
+          "is_secret": "false"
+        },
+        "ENV_ACR_RG_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-rg-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)storage-01",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_LOCATION": {
+          "value": "northeurope",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_TYPE": {
+          "value": "p",
+          "is_secret": "false"
+        },
+        "ENV_INFRA_NAME_PREFIX": {
+          "value": "demoappsol66",
+          "is_secret": "false"
+        },
+        "ENV_APPINS_NAME": {
+          "value": "$(ENV_INFRA_SO_NAME)-appins-$(ENV_INFRA_LOCATION_SHORT)-$(ENV_INFRA_TYPE)-$(ENV_INFRA_NAME_PREFIX)-01",
+          "is_secret": "false"
+        }
+      },
+      "name": "epam.prod.env.epamaodpsshared01",
+      "description": "This is the variable group that consists of variables for prod environment in the epam-aodp-s-shared-01\n subscription."
+    },
+    {
+      "variables": {
+        "SYS_HELM_VERSION": {
+          "value": "3.10.0",
+          "is_secret": "false"
+        },
+        "SYS_OPS_RW_PAT": {
+          "value": null,
+          "is_secret": "true"
+        },
+        "SYS_PROJECT_CODE": {
+          "value": "cnp",
+          "is_secret": "false"
+        },
+        "SYS_CODE_READ_PAT": {
+          "value": null,
+          "is_secret": "true"
+        },
+        "SYS_HELM_DEPLOY_TIMEOUT": {
+          "value": "10m0s",
+          "is_secret": "false"
+        },
+        "SYS_SONAR_ENDPOINT": {
+          "value": "sonarQube_endpoint_name",
+          "is_secret": "false"
+        },
+        "SYS_KUBECTL_VERSION": {
+          "value": "1.26.0",
+          "is_secret": "false"
+        }
+      },
+      "name": "opensource.com.sys.global",
+      "description": ""
+    },
+    {
+      "variables": {
+        "SYS_HELM_VERSION": {
+          "value": "3.10.0",
+          "is_secret": "false"
+        },
+        "SYS_OPS_RW_PAT": {
+          "value": null,
+          "is_secret": "true"
+        },
+        "SYS_PROJECT_CODE": {
+          "value": "cnp",
+          "is_secret": "false"
+        },
+        "SYS_CODE_READ_PAT": {
+          "value": null,
+          "is_secret": "true"
+        },
+        "SYS_HELM_DEPLOY_TIMEOUT": {
+          "value": "10m0s",
+          "is_secret": "false"
+        },
+        "SYS_SONAR_ENDPOINT": {
+          "value": "snrq_epam",
+          "is_secret": "false"
+        },
+        "SYS_KUBECTL_VERSION": {
+          "value": "1.26.0",
+          "is_secret": "false"
+        }
+      },
+      "name": "sys.global",
+      "description": ""
+    }
+  ],
+  "dashboards": [],
+  "reposRaw": []
+}

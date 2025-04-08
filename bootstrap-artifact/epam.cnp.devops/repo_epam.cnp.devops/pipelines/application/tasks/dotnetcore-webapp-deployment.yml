@@ -1,0 +1,164 @@
+parameters:
+- name: slotName
+  type: string
+  default: dummy
+
+steps:
+
+- pwsh: |
+    Write-Host "`n---- Make sure we are signed in to Azure. ----`n"
+    az login --service-principal -u '$(ENV_AZURE_CLIENT_ID)' -p '$(ENV_AZURE_CLIENT_SECRET)' --tenant $(ENV_AZURE_TENANT_ID) 
+    if ($LastExitCode -eq 0)
+    {
+        Write-Host " Log in to Azure succeeded."
+    }
+    else
+    {
+        Write-Error "`n---- Check your credentials. ----`n"
+    }
+     Write-Host "`n---- Add MSSQL server firewall rule for agent. ----`n"
+     
+     # Add function for MSSQL Firewall Rules creation 
+    function New-AzureSQLServerFirewallRule {
+      param
+      (
+        [String] $FirewallRuleName = "AgentAzureFirewallRule",
+        [String] [Parameter(Mandatory = $true)] $ipAddress 
+      )
+      az sql server firewall-rule create `
+      --name $FirewallRuleName `
+      --subscription $(ENV_AZURE_SUBSCRIPTION_ID) `
+      --resource-group $(ENV_RESOURCE_GROUP_NAME) `
+      --server $(ENV_MSSQL_SRV_NAME) `
+      --start-ip-address $ipAddress `
+      --end-ip-address $ipAddress
+    }
+     
+    # Add function for MSSQL Firewall Rules updating
+    function Update-AzureSQLServerFirewallRule{
+      param
+      (
+        [String] $FirewallRuleName = "AgentAzureFirewallRule",
+        [String] [Parameter(Mandatory = $true)] $ipAddress 
+      )
+      az sql server firewall-rule update `
+      --name $FirewallRuleName `
+      --subscription $(ENV_AZURE_SUBSCRIPTION_ID) `
+      --resource-group $(ENV_RESOURCE_GROUP_NAME) `
+      --server $(ENV_MSSQL_SRV_NAME) `
+      --start-ip-address $ipAddress `
+      --end-ip-address $ipAddress
+    }
+
+    #########################################################################################################
+    #
+    #       Create MSSQL Server Firewall rules for operating from different kinds of ADO agents:
+    #
+    #         1. Microsoft hosted Windows agent
+    #         2. Azure located Self hosted Linux/Windows agents
+    #         3. On-premiss located Self hosted Linux/Windows agents
+    #
+    ######################################################################################################### 
+
+    function Remove-AzureSQLServerFirewallRule{
+      param
+      (
+        [String] $FirewallRuleName = "AgentAzureFirewallRule"
+      )
+      az sql server firewall-rule delete `
+      --name $FirewallRuleName `
+      --subscription $(ENV_AZURE_SUBSCRIPTION_ID) `
+      --resource-group $(ENV_RESOURCE_GROUP_NAME) `
+      --server $(ENV_MSSQL_SRV_NAME)
+    }
+    
+    Write-Host "`n---- Get FW rule data ----`n"
+    $agentIP= (New-Object net.webclient).downloadstring("https://api.ipify.org")
+    $fwrule = (az sql server firewall-rule show --name "AgentAzureFirewallRule" --subscription $(ENV_AZURE_SUBSCRIPTION_ID) --resource-group $(ENV_RESOURCE_GROUP_NAME) --server $(ENV_MSSQL_SRV_NAME))
+    if ($null -eq $fwrule)
+    {
+      Write-Host "`n---- Add new Fw rule for agent. ----`n"
+      New-AzureSQLServerFirewallRule -ipAddress $agentIP
+    }
+    else
+    {
+      Write-Host "`n---- Update existing FW rule for agent. ----`n"
+      Update-AzureSQLServerFirewallRule -ipAddress $agentIP
+    }
+    Write-Host "`n---- Allow access to Azure Services ----`n"
+    New-AzureSQLServerFirewallRule -ipAddress "0.0.0.0" -FirewallRuleName "AllowAzureResources"
+
+    # Run SQL script for DB migration
+    
+    Write-Host "`n---- Run SQL script for Data Base migration ----`n"
+    Invoke-Sqlcmd -ServerInstance "$(ENV_MSSQL_SRV_NAME).database.windows.net" `
+    -Database $(ENV_MSSQL_DB_NAME) `
+    -Username $(ENV_MSSQL_SRV_LOGIN) `
+    -Password $(ENV_MSSQL_SRV_PASS) `
+    -InputFile "$(Pipeline.Workspace)/sql-$(Build.BuildNumber)/DbMigration.sql"
+
+    #########################################################################################################
+    #
+    #        Remove MSSQL Server Firewall rules for operating from different kinds of ADO agents
+    #
+    #########################################################################################################
+
+    if ($null -eq $fwrule)
+    {
+      Write-Host "`n---- Remove MSSQL server firewall rule for agent. ----`n"
+      Remove-AzureSQLServerFirewallRule -FirewallRuleName "AgentAzureFirewallRule"
+    }
+    Write-Host "`n---- Deny access to Azure Services ----`n"
+    Remove-AzureSQLServerFirewallRule -FirewallRuleName "AllowAzureResources"
+
+    #########################################################################################################
+    #
+    #                           Create MSSQL Server Firewall rules for Webapp
+    #
+    #########################################################################################################
+
+    Write-Host "`n---- Add MSSQL server firewall rules for Web App ----`n"
+    $iplist = ((az webapp show --subscription $(ENV_AZURE_SUBSCRIPTION_ID) `
+    --resource-group $(ENV_RESOURCE_GROUP_NAME) `
+    --name $(ENV_WEBAPP_NAME) `
+    --query "outboundIpAddresses").Trim('"')).Split(',')
+    foreach ($ip in $iplist)
+    {
+      Write-Host "`n---- Processing... Creating Firewall Rule Web-App-AzureWebAppFirewall-$($iplist.IndexOf($ip)) ----`n"
+      New-AzureSQLServerFirewallRule -FirewallRuleName "Web-App-AzureWebAppFirewall-$($iplist.IndexOf($ip))" -ipAddress $ip
+    }
+  name: SQL_schema_change
+  displayName: 'Azure SQL schema change'
+
+- pwsh: |
+    Write-Host "`n---- Make sure we are signed in to Azure. ----`n"
+    az login --service-principal -u '$(ENV_AZURE_CLIENT_ID)' -p '$(ENV_AZURE_CLIENT_SECRET)' --tenant $(ENV_AZURE_TENANT_ID) 
+    if ($LastExitCode -eq 0)
+    {
+        Write-Host " Log in to Azure succeeded."
+    }
+    else
+    {
+        Write-Error "`n`---- Check your credentials. ----`n"
+    }
+    if ("${{ parameters.slotName }}" -eq "dummy")
+    {
+      Write-Host "`n---- Processing... Deploing Web App ----`n"
+      az webapp deployment source config-zip `
+      --src '$(Pipeline.Workspace)/app-$(Build.BuildNumber)/project.zip' `
+      --subscription '$(ENV_AZURE_SUBSCRIPTION_ID)' `
+      --resource-group '$(ENV_RESOURCE_GROUP_NAME)' `
+      --name '$(ENV_WEBAPP_NAME)'
+    }
+    else
+    {
+      Write-Host "`n---- Processing... Deploing Web App to the ${{ parameters.slotName }} slot. ----`n"
+      az webapp deployment source config-zip `
+      --src '$(Pipeline.Workspace)/app-$(Build.BuildNumber)/project.zip' `
+      --subscription '$(ENV_AZURE_SUBSCRIPTION_ID)' `
+      --resource-group '$(ENV_RESOURCE_GROUP_NAME)' `
+      --name '$(ENV_WEBAPP_NAME)' `
+      --slot '${{ parameters.slotName }}'
+    }
+  name: Web_App_Deployment
+  displayName: 'Azure Web App Deployment'

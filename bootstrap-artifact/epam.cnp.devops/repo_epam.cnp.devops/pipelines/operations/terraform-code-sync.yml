@@ -1,0 +1,132 @@
+################################################################################################################################
+# INPUT PARAMETERS:
+# ------------------------------------------------------------------------------------------------------------------------------
+# - organization       The URI of the organization where the repository with source files located.
+#                      example: https://dev.azure.com/ORGANIZATION-NAME/
+# ------------------------------------------------------------------------------------------------------------------------------
+# - project            The name of the project where the repository with source files located.
+#                      example: ProjectName
+# ------------------------------------------------------------------------------------------------------------------------------
+# - branch             The source branch name of the remote repository.
+#                      example: main
+# ------------------------------------------------------------------------------------------------------------------------------
+# - configFile         The path where configuration file located.
+#                      example: $(System.DefaultWorkingDirectory)/scripts/_configuration/configuration_file.json
+# ------------------------------------------------------------------------------------------------------------------------------
+# - local_dir          The path in the local repository where files should locate.
+#                      example: $(System.DefaultWorkingDirectory)/iac/terraform
+# ------------------------------------------------------------------------------------------------------------------------------
+# - WorkItem           The ID of the work item that should be linked to the new pool request.
+#                      example: 777
+# ------------------------------------------------------------------------------------------------------------------------------
+# - reviewers          The user or the group of users to include as reviewers on the new pull request.
+#                      example: Reviewers-Group
+# ------------------------------------------------------------------------------------------------------------------------------
+# VARIABLES
+# ------------------------------------------------------------------------------------------------------------------------------
+# - referenceReadPAT   The PAT token with permissions to read remote repositories
+################################################################################################################################
+
+pool:
+  #{agent_pool}#
+
+trigger: none
+
+parameters:
+- name: organization
+  displayName: The Azure DevOps organization's URL
+  type: string
+  default: $(System.CollectionUri)
+- name: project
+  displayName: Project Name
+  type: string
+  default: AzureLandingZone
+- name: branch
+  displayName: Source branch
+  type: string
+  default: main
+- name: configFile
+  displayName: Configuration file path
+  default: $(System.DefaultWorkingDirectory)/scripts/operations/_configuration/tf_code_synch/synch_ALL_tf_modules_configuration.json
+- name: local_dir
+  displayName: Files' destination path
+  default: $(System.DefaultWorkingDirectory)/iac/terraform
+- name: WorkItem
+  displayName: Work Item ID to link to the new PR
+  type: string
+- name: reviewers
+  displayName: Reviewers on the new pull
+  type: string
+  default: "CNP-Approvers"
+
+variables:
+- group: tool.synchronization.code
+
+
+stages:
+- stage: Coollect_tf_modules
+  displayName: Collect tf modules from ALZ
+
+  jobs:
+  - job: Coollect_tf_modules
+    displayName: Collect tf modules from ALZ
+    workspace:
+      clean: all
+    steps:
+    - checkout: self
+      persistCredentials: true
+
+    - task: PowerShell@2
+      name: CollectTFCode
+      displayName: Collect Terraform code
+      inputs:
+        filePath: scripts/operations/synch_remote_repos_to_local_repo_script.ps1
+        arguments: >
+          -org ${{ parameters.organization }}
+          -project ${{ parameters.project }}
+          -sourceBranch ${{ parameters.branch }}
+          -outputPath $(Build.ArtifactStagingDirectory)/tf_modules
+          -configFile ${{ parameters.configFile }}
+          -local_dir ${{ parameters.local_dir }}
+        pwsh: true
+        errorActionPreference: stop
+      env:
+        token: $(TOOL_BOOTSTRAP_READ_PAT)
+
+    - task: PowerShell@2
+      displayName: Provide changes to the repository
+      condition: and(succeeded(), eq(variables['CollectTFCode.SYNCH_CHECK'], 'True'))
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(System.DefaultWorkingDirectory)
+        script: |
+          Write-Host "`n---- Create the new branch 'feature/get_tf_modules_$(Build.BuildNumber)' ----`n"
+          git branch feature/get_tf_modules_$(Build.BuildNumber) -f
+          Write-Host "`n---- Checkout to the 'feature/get_tf_modules_$(Build.BuildNumber)' branch ----`n"
+          git checkout feature/get_tf_modules_$(Build.BuildNumber)
+          Write-Host "`n---- Commit changes to the 'feature/get_tf_modules_$(Build.BuildNumber)' branch ----`n"
+          git add --all
+          git commit -m "Get terraform code from ALZ $(Build.BuildNumber)"
+          Write-Host "`n---- Push changes to the repository ----`n"
+          git push --set-upstream origin feature/get_tf_modules_$(Build.BuildNumber)
+          Write-Host "`n---- Login to Azure DevOps ----`n"
+          echo $(System.AccessToken) | az devops login --org ${{ parameters.organization }}
+          Write-Host "`n---- Create the Pull Request ----`n"
+          az repos pr create --repository $(Build.Repository.Name) --auto-complete false --delete-source-branch true `
+            --merge-commit-message "Update terraform code from ALZ $(Build.BuildNumber)" `
+            --description "Update terraform code from ALZ $(Build.BuildNumber)" --org $(System.CollectionUri) `
+            --project "#{project_name}#" --squash true --source-branch "feature/get_tf_modules_$(Build.BuildNumber)" `
+            --target-branch $(Build.SourceBranch) --title "Update terraform code from ALZ $(Build.BuildNumber)" `
+            --work-items ${{ parameters.WorkItem }} --reviewers ${{ parameters.reviewers }}
+
+    - task: ArchiveFiles@2
+      displayName: Archive terraform files
+      inputs:
+        rootFolderOrFile: $(Build.ArtifactStagingDirectory)/tf_modules/
+        archiveFile: '$(Build.ArtifactStagingDirectory)/tf_modules-$(Build.BuildNumber).zip'
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish terraform files
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/tf_modules-$(Build.BuildNumber).zip'
+        ArtifactName: 'tf_modules-$(Build.BuildNumber)'

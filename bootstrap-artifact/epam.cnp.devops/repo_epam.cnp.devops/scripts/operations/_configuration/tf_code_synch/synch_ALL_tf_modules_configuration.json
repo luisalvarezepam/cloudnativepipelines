@@ -1,0 +1,132 @@
+{
+    "repos": {
+        "include": [
+            {
+                "name": "epam.alz.terraform",
+                "files": {
+                    "include": "(_modules/070_appmonitoring/[ -~]+tf$|_solutions/webapp/[ -~]+tf$|_modules/075_webapp/[ -~]+tf$|_configuration/_global/[ -~]+tf[ -~]*)$|_solutions/cnp_app_v1/[ -~]+tf$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.rg",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.aks",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.private_endpoint",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.log_analytics",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf|^\\/[^/\\.]+\\.json)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.lock",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.app_insights",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.cosmosdb_account",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.monitor_action_group",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.alerts",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.dashboard",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.mssql_server",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.mssql_db",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.windows_web_app",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.linux_web_app",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.asp",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.vnet",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.azure_container_registry",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.storage_account",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.app_insights_actions",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            },
+            {
+                "name": "terraform.azurerm.cosmosdb_mongo",
+                "files": {
+                    "include": "(/README.md|^\\/[^/]+\\.tf)$"
+                }
+            }
+        ]
+    }
+}
